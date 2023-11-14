@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  php-fpm:
+    build: ./compose/php-fpm
+    container_name: 'php-fpm'
+    volumes:
+      - './source:/var/www/html'
+    ports:
+      - '9000:9000'
+
+  nginx:
+    build: ./compose/nginx
+    container_name: nginx
+    volumes:
+      - './source:/var/www/html'
+    ports:
+      - '80:80'
+    depends_on:
+      - php-fpm
+      - mysql
+
+  mysql:
+    image: mysql:8.1
+    container_name: mysql
+    volumes:
+      - './source/data:/var/lib/mysql'
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: netltece
+      MYSQL_PASSWORD: 88888
+      MYSQL_ROOT_PASSWORD: 11111
+    restart: unless-stopped
+    ports:
+      - '3306:3306'
+
+  swagger:
+    container_name: swagger
+    image: swaggerapi/swagger-ui
+    networks:
+      rest-api_default:
+        aliases:
+          - swagger
+    environment:
+      URLS: "[
+          { url: 'http://localhost/swagger/v1', name: 'v1'},
+        ]"
+      USE_UNSAFE_MARKDOWN: true
+      DOC_EXPANSION: true
+    ports:
+      - '5440:8080'
+
+networks:
+  rest-api_default:
+    external: true
